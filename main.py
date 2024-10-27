@@ -17,11 +17,12 @@ FEATURE_HUMIDITY = 'humidity'
 FEATURE_WIND_SPEED = 'wind_speed'
 FEATURE_RAIN = 'rain'
 
-# Local image path (Replace this with your actual file path)
-LOCAL_IMAGE_PATH_W = r"C:\Users\NoteBook\Pictures\Weather bot\Design 8.png"
-LOCAL_IMAGE_PATH_WI = r"C:\Users\NoteBook\Pictures\Weather bot\Design 9.png"
-LOCAL_IMAGE_PATH_H = r"C:\Users\NoteBook\Pictures\Weather bot\Design 10.png"
-LOCAL_IMAGE_PATH_R = r"C:\Users\NoteBook\Pictures\Weather bot\Design 11.png"
+
+LOCAL_IMAGE_PATH_W =r"C:\Users\NoteBook\Pictures\Weather bot\Design 8.png"    # Weather
+LOCAL_IMAGE_PATH_WI =r"C:\Users\NoteBook\Pictures\Weather bot\Design 9.png"   # Wind
+LOCAL_IMAGE_PATH_H = r"C:\Users\NoteBook\Pictures\Weather bot\Design 10.png"   # Humidity
+LOCAL_IMAGE_PATH_R = r"C:\Users\NoteBook\Pictures\Weather bot\Design 11.png"  # Rain
+
 
 
 # Start command
@@ -59,54 +60,190 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 # Weather command
-async def weather_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data[WAITING_FOR_LOCATION] = True
-    context.user_data[REQUESTED_FEATURE] = FEATURE_TEMPERATURE
-    location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
-                         [KeyboardButton("Enter Custom Location")]]
-    reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
-    await update.message.reply_text('Please share your location to get the weather update.', reply_markup=reply_markup)
+async def weather_command(update: Update, context: ContextTypes.DEFAULT_TYPE, latitude=None, longitude=None) -> None:
+    if latitude is None or longitude is None:
+        # Ask for location
+        context.user_data[WAITING_FOR_LOCATION] = True
+        context.user_data[REQUESTED_FEATURE] = FEATURE_TEMPERATURE
+        location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
+                             [KeyboardButton("Enter Custom Location")]]
+        reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
+        await update.message.reply_text('Please share your location to get the weather update.', reply_markup=reply_markup)
+    else:
+        # Handle weather request
+        api_url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
+        response = requests.get(api_url)
+        data = response.json()
 
+        # Check if temperature exists in the response
+        if 'temperature' in data['current_weather']:
+            current_temp = data['current_weather']['temperature']
+            weather_message = f"The current temperature is {current_temp}°C."
+        else:
+            weather_message = "Sorry, temperature data is not available for the provided location."
+
+        # Send weather image and message
+        with open(LOCAL_IMAGE_PATH_W, 'rb') as image_file:
+            await context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=image_file,
+                caption=weather_message
+            )
+            keyboard = [
+                [InlineKeyboardButton("Get Weather", callback_data='weather')],
+                [InlineKeyboardButton("Get Humidity", callback_data='humidity')],
+                [InlineKeyboardButton("Get Wind Speed", callback_data='wind')],
+                [InlineKeyboardButton("Check Rain Forecast", callback_data='rain')],
+                [InlineKeyboardButton("Get Seven Day Forecast", callback_data='seven_day_forecast')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await update.message.reply_text(
+                'Need any thing else ?',
+                reply_markup=reply_markup
+            )
 
 # Humidity command
-async def humidity_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data[WAITING_FOR_LOCATION] = True
-    context.user_data[REQUESTED_FEATURE] = FEATURE_HUMIDITY
-    location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
-                         [KeyboardButton("Enter Custom Location")]]
-    reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
-    await update.message.reply_text('Please share your location to get the humidity data.', reply_markup=reply_markup)
+async def humidity_command(update: Update, context: ContextTypes.DEFAULT_TYPE, latitude=None, longitude=None) -> None:
+    if latitude is None or longitude is None:
+        context.user_data[WAITING_FOR_LOCATION] = True
+        context.user_data[REQUESTED_FEATURE] = FEATURE_HUMIDITY
+        location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
+                             [KeyboardButton("Enter Custom Location")]]
+        reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
+        await update.message.reply_text('Please share your location to get the humidity data.', reply_markup=reply_markup)
+    else:
+        # Handle humidity request
+        api_url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
+        response = requests.get(api_url)
+        data = response.json()
 
+        # Check if 'humidity' exists in the response
+        if 'humidity' in data['current_weather']:
+            humidity = data['current_weather']['humidity']
+            humidity_message = f"The current humidity is {humidity}%."
+        else:
+            humidity_message = "Sorry, humidity data is not available for the provided location."
+
+        # Send the humidity image and message
+        with open(LOCAL_IMAGE_PATH_H, 'rb') as image_file:
+            await context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=image_file,
+                caption=humidity_message
+            )
+            keyboard = [
+                [InlineKeyboardButton("Get Weather", callback_data='weather')],
+                [InlineKeyboardButton("Get Humidity", callback_data='humidity')],
+                [InlineKeyboardButton("Get Wind Speed", callback_data='wind')],
+                [InlineKeyboardButton("Check Rain Forecast", callback_data='rain')],
+                [InlineKeyboardButton("Get Seven Day Forecast", callback_data='seven_day_forecast')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await update.message.reply_text(
+                'Need any thing else ?',
+                reply_markup=reply_markup
+            )
 
 # Wind speed command
-async def wind_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data[WAITING_FOR_LOCATION] = True
-    context.user_data[REQUESTED_FEATURE] = FEATURE_WIND_SPEED
-    location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
-                         [KeyboardButton("Enter Custom Location")]]
-    reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
-    await update.message.reply_text('Please share your location to get the wind speed data.', reply_markup=reply_markup)
+async def wind_command(update: Update, context: ContextTypes.DEFAULT_TYPE, latitude=None, longitude=None) -> None:
+    if latitude is None or longitude is None:
+        context.user_data[WAITING_FOR_LOCATION] = True
+        context.user_data[REQUESTED_FEATURE] = FEATURE_WIND_SPEED
+        location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
+                             [KeyboardButton("Enter Custom Location")]]
+        reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
+        await update.message.reply_text('Please share your location to get the wind speed data.', reply_markup=reply_markup)
+    else:
+        # Handle wind speed request
+        api_url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
+        response = requests.get(api_url)
+        data = response.json()
 
+        # Check if 'windspeed' exists in the response
+        if 'windspeed' in data['current_weather']:
+            wind_speed = data['current_weather']['windspeed']
+            wind_message = f"The current wind speed is {wind_speed} m/s."
+        else:
+            wind_message = "Sorry, wind speed data is not available for the provided location."
+
+        # Send wind image and message
+        with open(LOCAL_IMAGE_PATH_WI, 'rb') as image_file:
+            await context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=image_file,
+                caption=wind_message
+            )
+            keyboard = [
+                [InlineKeyboardButton("Get Weather", callback_data='weather')],
+                [InlineKeyboardButton("Get Humidity", callback_data='humidity')],
+                [InlineKeyboardButton("Get Wind Speed", callback_data='wind')],
+                [InlineKeyboardButton("Check Rain Forecast", callback_data='rain')],
+                [InlineKeyboardButton("Get Seven Day Forecast", callback_data='seven_day_forecast')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await update.message.reply_text(
+                'Need any thing else ?',
+                reply_markup=reply_markup
+            )
 
 # Rain forecast command
-async def rain_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data[WAITING_FOR_LOCATION] = True
-    context.user_data[REQUESTED_FEATURE] = FEATURE_RAIN
-    location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
-                         [KeyboardButton("Enter Custom Location")]]
-    reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
-    await update.message.reply_text('Please share your location to check the rain forecast.', reply_markup=reply_markup)
+async def rain_command(update: Update, context: ContextTypes.DEFAULT_TYPE, latitude=None, longitude=None) -> None:
+    if latitude is None or longitude is None:
+        context.user_data[WAITING_FOR_LOCATION] = True
+        context.user_data[REQUESTED_FEATURE] = FEATURE_RAIN
+        location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
+                             [KeyboardButton("Enter Custom Location")]]
+        reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
+        await update.message.reply_text('Please share your location to check the rain forecast.', reply_markup=reply_markup)
+    else:
+        # Handle rain forecast request
+        api_url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&daily=precipitation_sum&timezone=auto"
+        response = requests.get(api_url)
+        data = response.json()
 
+        # Check if 'precipitation_sum' exists in the response
+        if 'precipitation_sum' in data['daily']:
+            rain_forecast = data['daily']['precipitation_sum'][0]
+            rain_message = f"The forecasted rain for today is {rain_forecast} mm."
+        else:
+            rain_message = "Sorry, rain data is not available for the provided location."
+
+        # Send rain image and message
+        with open(LOCAL_IMAGE_PATH_R, 'rb') as image_file:
+            await context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=image_file,
+                caption=rain_message
+            )
+            keyboard = [
+                [InlineKeyboardButton("Get Weather", callback_data='weather')],
+                [InlineKeyboardButton("Get Humidity", callback_data='humidity')],
+                [InlineKeyboardButton("Get Wind Speed", callback_data='wind')],
+                [InlineKeyboardButton("Check Rain Forecast", callback_data='rain')],
+                [InlineKeyboardButton("Get Seven Day Forecast", callback_data='seven_day_forecast')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await update.message.reply_text(
+                'Need any thing else ?',
+                reply_markup=reply_markup
+            )
 
 # 7 day forecast command
-async def seven_day_forecast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data[WAITING_FOR_LOCATION] = True
-    context.user_data[REQUESTED_FEATURE] = FEATURE_SEVEN_DAY_FORECAST
-    location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
-                         [KeyboardButton("Enter Custom Location")]]
-    reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
-    await update.message.reply_text('Please share your location to get a seven-day forecast.',
-                                    reply_markup=reply_markup)
+async def seven_day_forecast(update: Update, context: ContextTypes.DEFAULT_TYPE, latitude=None, longitude=None) -> None:
+    if latitude is None or longitude is None:
+        context.user_data[WAITING_FOR_LOCATION] = True
+        context.user_data[REQUESTED_FEATURE] = FEATURE_SEVEN_DAY_FORECAST
+        location_keyboard = [[KeyboardButton("Send Location", request_location=True)],
+                             [KeyboardButton("Enter Custom Location")]]
+        reply_markup = ReplyKeyboardMarkup(location_keyboard, one_time_keyboard=True)
+        await update.message.reply_text('Please share your location to get a seven-day forecast.',
+                                        reply_markup=reply_markup)
+    else:
+        await handle_seven_day_forecast(update, context, latitude, longitude)
 
 
 # Location handler
@@ -153,7 +290,19 @@ async def handle_seven_day_forecast(update: Update, context: ContextTypes.DEFAUL
             photo=image_file,
             caption=forecast_message
         )
+        keyboard = [
+            [InlineKeyboardButton("Get Weather", callback_data='weather')],
+            [InlineKeyboardButton("Get Humidity", callback_data='humidity')],
+            [InlineKeyboardButton("Get Wind Speed", callback_data='wind')],
+            [InlineKeyboardButton("Check Rain Forecast", callback_data='rain')],
+            [InlineKeyboardButton("Get Seven Day Forecast", callback_data='seven_day_forecast')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
+        await update.message.reply_text(
+            'Need any thing else ?',
+            reply_markup=reply_markup
+        )
 
 # Main function
 def main() -> None:
