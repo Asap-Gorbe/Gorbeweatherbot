@@ -9,3 +9,9 @@ added picture to commands and now you recive the rusalts in capyion 9/6/2024
 added inline keyboard buttons to start command and added custom location to menu 9/11/2024
 
 added 7 day forecast command 9/15/2024
+
+aded sqlite3 database to store user_id , long , lat 10/28/2024
+
+updated data base to store username , first name , last name 11/8/2024
+
+started the https://t.me/Gorbe_Weather_Test_bot to test the new features 11/9/2024
