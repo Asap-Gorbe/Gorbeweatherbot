@@ -6,7 +6,7 @@ from Token import API_KEY_TEST
 
 TOKEN = API_KEY_TEST
 
-# Define constants for user_data keys
+
 WAITING_FOR_LOCATION = 'waiting_for_location'
 REQUESTED_FEATURE = 'requested_feature'
 
